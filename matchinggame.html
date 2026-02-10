@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Challenge</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;family=Pacifico&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    
+    * {
+      font-family: 'Quicksand', sans-serif;
+    }
+    
+    .title-font {
+      font-family: 'Pacifico', cursive;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes pulse-soft {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    @keyframes confetti-fall {
+      0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    
+    @keyframes bounce-in {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes heart-burst {
+      0% { transform: scale(0) rotate(0deg); opacity: 1; }
+      50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; }
+      100% { transform: scale(2) rotate(360deg); opacity: 0; }
+    }
+    
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+    
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .pulse-animation {
+      animation: pulse-soft 2s ease-in-out infinite;
+    }
+    
+    .wiggle-animation {
+      animation: wiggle 0.5s ease-in-out infinite;
+    }
+    
+    .bounce-in {
+      animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    .card {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+    
+    .card-face {
+      backface-visibility: hidden;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .card-back {
+      transform: rotateY(180deg);
+    }
+    
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      animation: confetti-fall 3s linear forwards;
+    }
+    
+    .screen {
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    
+    .screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+      position: absolute;
+    }
+    
+    .envelope-flap {
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: top center;
+    }
+    
+    .envelope-open .envelope-flap {
+      transform: rotateX(180deg);
+    }
+    
+    .no-btn {
+      transition: all 0.15s ease;
+    }
+    
+    .sparkle {
+      position: absolute;
+      animation: sparkle 1.5s ease-in-out infinite;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto"><!-- Screen 1: Welcome -->
+   <div id="welcome-screen" class="screen min-h-full w-full flex flex-col items-center justify-center p-6 text-center" style="background: #1a1a1a; color: #ffffff;">
+    <div class="max-w-md w-full">
+     <div class="text-6xl mb-6 float-animation">
+      🎮
+     </div>
+     <h1 id="welcome-title" class="title-font text-4xl mb-4" style="color: #ffffff;">Hey Cass!</h1>
+     <p id="welcome-text" class="text-lg mb-8 opacity-80" style="color: #cccccc;">I made something special for you! Ready for a quick challenge?</p><button id="start-btn" class="px-8 py-4 rounded-full text-lg font-semibold shadow-lg pulse-animation transition-all hover:scale-105" style="background: #FF6B9D; color: #ffffff;"> Let's Play! ✨ </button>
+    </div>
+   </div><!-- Screen 2: Memory Game -->
+   <div id="game-screen" class="screen hidden min-h-full w-full flex flex-col items-center justify-center p-6" style="background: #1a1a1a; color: #ffffff;">
+    <div class="max-w-md w-full text-center">
+     <h2 class="text-2xl font-bold mb-2" style="color: #ffffff;">Memory Match</h2>
+     <p class="text-sm opacity-70 mb-4" style="color: #aaaaaa;">Find all the Matching Pokemon Type Pairs! Wag Basta Pisil...</p>
+     <div id="moves-counter" class="text-sm mb-4 font-medium" style="color: #ffffff;">
+      Moves: 0
+     </div>
+     <div id="game-board" class="grid grid-cols-4 gap-2 mb-4"></div>
+     <p id="game-hint" class="text-sm opacity-60" style="color: #aaaaaa;">Tap cards to flip them</p>
+    </div>
+   </div><!-- Screen 3: Celebration -->
+   <div id="celebration-screen" class="screen hidden min-h-full w-full flex flex-col items-center justify-center p-6 text-center">
+    <div class="max-w-md w-full">
+     <div class="text-7xl mb-6 bounce-in">
+      🎉
+     </div>
+     <h2 class="text-3xl font-bold mb-4 bounce-in" style="animation-delay: 0.2s">Galing mo talaga, Baby! May Surprise ako para sayo...</h2><button id="continue-btn" class="px-8 py-4 rounded-full text-lg font-semibold shadow-lg pulse-animation transition-all hover:scale-105"> Anong Surprise? 🎁 </button>
+    </div>
+   </div><!-- Screen 4: Gift/Envelope -->
+   <div id="gift-screen" class="screen hidden min-h-full w-full flex flex-col items-center justify-center p-6 text-center">
+    <div class="max-w-md w-full">
+     <p class="text-lg mb-6 opacity-80">I Have A Question to Ask...</p><!-- Envelope -->
+     <div id="envelope" class="relative w-64 h-48 mx-auto cursor-pointer transition-transform hover:scale-105" style="perspective: 1000px;"><!-- Envelope Body -->
+      <div class="absolute inset-0 rounded-lg shadow-xl flex flex-col justify-end p-4" id="envelope-body"><!-- Letter content at bottom -->
+       <div class="text-center space-y-1" style="background: linear-gradient(135deg, rgba(255, 182, 193, 0.15), rgba(255, 192, 203, 0.1)); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 105, 180, 0.3);">
+        <p class="text-xs font-semibold" style="color: #E75480;">To: Cass</p>
+        <p class="text-xs font-semibold italic" style="color: #E75480;">From: Wuvy 💕</p>
+       </div>
+      </div><!-- Envelope Flap -->
+      <div class="envelope-flap absolute top-0 left-0 right-0 h-24 origin-top" id="envelope-flap">
+       <svg viewbox="0 0 256 96" class="w-full h-full"><path d="M0,0 L128,80 L256,0 L256,0 L0,0 Z" id="flap-path" />
+       </svg>
+      </div><!-- Heart seal -->
+      <div id="heart-seal" class="absolute top-16 left-1/2 -translate-x-1/2 text-4xl z-10 wiggle-animation">
+       💝
+      </div><!-- Tap indicator -->
+      <div id="tap-indicator" class="absolute -bottom-12 left-1/2 -translate-x-1/2 text-sm opacity-60 flex items-center gap-2"><span>👆</span> Tap to open
+      </div>
+     </div>
+    </div>
+   </div><!-- Screen 5: The Question -->
+   <div id="question-screen" class="screen hidden min-h-full w-full flex flex-col items-center justify-center p-6 text-center overflow-hidden relative"><!-- Floating hearts background - full page -->
+    <div id="floating-hearts" class="absolute inset-0 pointer-events-none overflow-hidden w-full h-full"></div>
+    <div class="max-w-md w-full relative z-10">
+     <div class="text-6xl mb-6">
+      💕
+     </div>
+     <h2 id="question-name" class="title-font text-3xl mb-6">Cass...</h2>
+     <p class="text-2xl font-semibold mb-8 leading-relaxed">Will you be my Valentine? 💘</p>
+     <div class="flex flex-col sm:flex-row gap-4 justify-center items-center relative min-h-24"><button id="yes-btn" class="px-10 py-4 rounded-full text-xl font-bold shadow-lg transition-all hover:scale-110 hover:shadow-xl"> Yes! 💖 </button> <button id="no-btn" class="no-btn px-8 py-3 rounded-full text-lg font-medium shadow transition-all"> No </button>
+     </div>
+    </div>
+   </div><!-- Screen 6: Final Message -->
+   <div id="final-screen" class="screen hidden min-h-full w-full flex flex-col items-center justify-center p-6 text-center">
+    <div class="max-w-md w-full relative"><!-- Sparkles -->
+     <div class="absolute inset-0 pointer-events-none" id="sparkles-container"></div>
+     <div class="relative z-10">
+      <div class="text-7xl mb-6 bounce-in">
+       💝
+      </div>
+      <h2 id="final-title" class="title-font text-4xl mb-2 bounce-in" style="animation-delay: 0.2s">I Love you So So Much</h2>
+      <p id="final-endearment" class="title-font text-3xl bounce-in" style="animation-delay: 0.4s">My Wuvy Baby</p>
+      <div class="mt-8 text-6xl flex justify-center gap-2"><span class="bounce-in" style="animation-delay: 0.6s">💖</span> <span class="bounce-in" style="animation-delay: 0.7s">💕</span> <span class="bounce-in" style="animation-delay: 0.8s">💖</span>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    const defaultConfig = {
+      recipient_name: 'Cass',
+      endearment: 'Wuvy',
+      welcome_message: 'I made something special for you! Ready for a quick challenge?',
+      final_message: 'I Love You So Much',
+      game_background: '#1a1a1a',
+      game_card_front: '#000000',
+      game_card_back: '#2a2a2a',
+      background_color: '#FFF5F7',
+      primary_color: '#FF6B9D',
+      secondary_color: '#FFE4EC',
+      text_color: '#4A3540',
+      accent_color: '#FF8FAB'
+    };
+
+    let config = { ...defaultConfig };
+
+    // Game state
+    let cards = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let moves = 0;
+    let canFlip = true;
+
+    const cardEmojis = ['⚡', '🪨', '💧', '🌱', '🖤', '❄️', '🔥', '⚙️'];
+
+    function applyColors() {
+      const bg = config.background_color || defaultConfig.background_color;
+      const primary = config.primary_color || defaultConfig.primary_color;
+      const secondary = config.secondary_color || defaultConfig.secondary_color;
+      const text = config.text_color || defaultConfig.text_color;
+      const accent = config.accent_color || defaultConfig.accent_color;
+
+      document.body.style.backgroundColor = bg;
+      document.body.style.color = text;
+
+      // Buttons
+      const buttons = ['start-btn', 'continue-btn', 'yes-btn'];
+      buttons.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+          btn.style.backgroundColor = primary;
+          btn.style.color = '#FFF';
+        }
+      });
+
+      const noBtn = document.getElementById('no-btn');
+      if (noBtn) {
+        noBtn.style.backgroundColor = secondary;
+        noBtn.style.color = text;
+      }
+
+      // Envelope
+      const envelopeBody = document.getElementById('envelope-body');
+      if (envelopeBody) envelopeBody.style.backgroundColor = secondary;
+      
+      const flapPath = document.getElementById('flap-path');
+      if (flapPath) flapPath.style.fill = accent;
+
+      // Titles
+      document.querySelectorAll('.title-font').forEach(el => {
+        el.style.color = primary;
+      });
+    }
+
+    function updateContent() {
+      const name = config.recipient_name || defaultConfig.recipient_name;
+      const endearment = config.endearment || defaultConfig.endearment;
+      const welcomeMsg = config.welcome_message || defaultConfig.welcome_message;
+      const finalMsg = config.final_message || defaultConfig.final_message;
+
+      document.getElementById('welcome-title').textContent = `Hey ${name}!`;
+      document.getElementById('welcome-text').textContent = welcomeMsg;
+      document.getElementById('question-name').textContent = `${name}...`;
+      document.getElementById('final-title').textContent = finalMsg;
+      document.getElementById('final-endearment').textContent = `My ${endearment} 💕`;
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.add('hidden');
+      });
+      const target = document.getElementById(screenId);
+      target.classList.remove('hidden');
+      
+      if (screenId === 'game-screen') {
+        initGame();
+      }
+      if (screenId === 'question-screen') {
+        createFloatingHearts();
+      }
+      if (screenId === 'final-screen') {
+        createSparkles();
+        createConfetti();
+      }
+    }
+
+    function initGame() {
+      const board = document.getElementById('game-board');
+      board.innerHTML = '';
+      
+      const gameEmojis = [...cardEmojis, ...cardEmojis];
+      shuffleArray(gameEmojis);
+      
+      cards = [];
+      flippedCards = [];
+      matchedPairs = 0;
+      moves = 0;
+      canFlip = true;
+      updateMovesCounter();
+
+      const cardFrontColor = config.game_card_front || '#000000';
+      const cardBackColor = config.game_card_back || '#2a2a2a';
+
+      gameEmojis.forEach((emoji, index) => {
+        const card = document.createElement('div');
+        card.className = 'card relative cursor-pointer';
+        card.style.width = '100%';
+        card.style.paddingBottom = '100%';
+        card.dataset.index = index;
+        card.dataset.emoji = emoji;
+
+        card.innerHTML = `
+          <div class="card-face card-front absolute inset-0 flex items-center justify-center text-2xl font-bold" style="background: ${cardFrontColor}; color: white;">?</div>
+          <div class="card-face card-back absolute inset-0 flex items-center justify-center text-2xl" style="background: ${cardBackColor};">${emoji}</div>
+        `;
+
+        card.addEventListener('click', () => flipCard(card));
+        board.appendChild(card);
+        cards.push(card);
+      });
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function flipCard(card) {
+      if (!canFlip || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+      card.classList.add('flipped');
+      flippedCards.push(card);
+
+      if (flippedCards.length === 2) {
+        canFlip = false;
+        moves++;
+        updateMovesCounter();
+        checkMatch();
+      }
+    }
+
+    function updateMovesCounter() {
+      document.getElementById('moves-counter').textContent = `Moves: ${moves}`;
+    }
+
+    function checkMatch() {
+      const [card1, card2] = flippedCards;
+      const match = card1.dataset.emoji === card2.dataset.emoji;
+
+      if (match) {
+        card1.classList.add('matched');
+        card2.classList.add('matched');
+        matchedPairs++;
+        flippedCards = [];
+        canFlip = true;
+
+        if (matchedPairs === 8) {
+          setTimeout(() => showScreen('celebration-screen'), 800);
+        }
+      } else {
+        setTimeout(() => {
+          card1.classList.remove('flipped');
+          card2.classList.remove('flipped');
+          flippedCards = [];
+          canFlip = true;
+        }, 1000);
+      }
+    }
+
+    function createFloatingHearts() {
+      const container = document.getElementById('floating-hearts');
+      container.innerHTML = '';
+      const hearts = ['💕', '💖', '💗', '💓', '💝'];
+      
+      for (let i = 0; i < 15; i++) {
+        const heart = document.createElement('div');
+        heart.className = 'absolute text-2xl opacity-30';
+        heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+        heart.style.left = `${Math.random() * 100}%`;
+        heart.style.top = `${Math.random() * 100}%`;
+        heart.style.animation = `float ${3 + Math.random() * 2}s ease-in-out infinite`;
+        heart.style.animationDelay = `${Math.random() * 2}s`;
+        container.appendChild(heart);
+      }
+    }
+
+    function createSparkles() {
+      const container = document.getElementById('sparkles-container');
+      container.innerHTML = '';
+      
+      for (let i = 0; i < 20; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle text-xl';
+        sparkle.textContent = '✨';
+        sparkle.style.left = `${Math.random() * 100}%`;
+        sparkle.style.top = `${Math.random() * 100}%`;
+        sparkle.style.animationDelay = `${Math.random() * 1.5}s`;
+        container.appendChild(sparkle);
+      }
+    }
+
+    function createConfetti() {
+      const colors = [
+        config.primary_color || defaultConfig.primary_color,
+        config.accent_color || defaultConfig.accent_color,
+        '#FFD700',
+        '#FF69B4',
+        '#87CEEB'
+      ];
+      
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = `${Math.random() * 100}%`;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        document.body.appendChild(confetti);
+
+        setTimeout(() => confetti.remove(), 3500);
+      }
+    }
+
+    function setupNoButton() {
+      const noBtn = document.getElementById('no-btn');
+      const questionScreen = document.getElementById('question-screen');
+      
+      noBtn.addEventListener('mouseenter', moveNoButton);
+      noBtn.addEventListener('click', moveNoButton);
+      noBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        moveNoButton();
+      });
+
+      function moveNoButton() {
+        const screenRect = questionScreen.getBoundingClientRect();
+        const btnRect = noBtn.getBoundingClientRect();
+        
+        const maxX = screenRect.width - btnRect.width - 40;
+        const maxY = screenRect.height - btnRect.height - 40;
+        
+        const newX = Math.random() * maxX - maxX / 2;
+        const newY = Math.random() * maxY - maxY / 2;
+        
+        noBtn.style.transform = `translate(${newX}px, ${newY}px)`;
+      }
+    }
+
+    function setupEnvelope() {
+      const envelope = document.getElementById('envelope');
+      let isOpen = false;
+
+      envelope.addEventListener('click', () => {
+        if (!isOpen) {
+          isOpen = true;
+          envelope.classList.add('envelope-open');
+          document.getElementById('heart-seal').style.opacity = '0';
+          document.getElementById('tap-indicator').style.opacity = '0';
+          
+          setTimeout(() => {
+            showScreen('question-screen');
+          }, 800);
+        }
+      });
+    }
+
+    // Initialize
+    document.getElementById('start-btn').addEventListener('click', () => showScreen('game-screen'));
+    document.getElementById('continue-btn').addEventListener('click', () => showScreen('gift-screen'));
+    document.getElementById('yes-btn').addEventListener('click', () => showScreen('final-screen'));
+
+    setupNoButton();
+    setupEnvelope();
+    applyColors();
+    updateContent();
+
+    // Element SDK Integration
+    window.elementSdk.init({
+      defaultConfig,
+      onConfigChange: async (newConfig) => {
+        config = { ...defaultConfig, ...newConfig };
+        applyColors();
+        updateContent();
+      },
+      mapToCapabilities: (cfg) => ({
+        recolorables: [
+          {
+            get: () => cfg.background_color || defaultConfig.background_color,
+            set: (v) => { cfg.background_color = v; window.elementSdk.setConfig({ background_color: v }); }
+          },
+          {
+            get: () => cfg.secondary_color || defaultConfig.secondary_color,
+            set: (v) => { cfg.secondary_color = v; window.elementSdk.setConfig({ secondary_color: v }); }
+          },
+          {
+            get: () => cfg.text_color || defaultConfig.text_color,
+            set: (v) => { cfg.text_color = v; window.elementSdk.setConfig({ text_color: v }); }
+          },
+          {
+            get: () => cfg.primary_color || defaultConfig.primary_color,
+            set: (v) => { cfg.primary_color = v; window.elementSdk.setConfig({ primary_color: v }); }
+          },
+          {
+            get: () => cfg.accent_color || defaultConfig.accent_color,
+            set: (v) => { cfg.accent_color = v; window.elementSdk.setConfig({ accent_color: v }); }
+          }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      }),
+      mapToEditPanelValues: (cfg) => new Map([
+        ['recipient_name', cfg.recipient_name || defaultConfig.recipient_name],
+        ['endearment', cfg.endearment || defaultConfig.endearment],
+        ['welcome_message', cfg.welcome_message || defaultConfig.welcome_message],
+        ['final_message', cfg.final_message || defaultConfig.final_message],
+        ['game_background', cfg.game_background || defaultConfig.game_background],
+        ['game_card_front', cfg.game_card_front || defaultConfig.game_card_front],
+        ['game_card_back', cfg.game_card_back || defaultConfig.game_card_back]
+      ])
+    });
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9cb99fad36800502',t:'MTc3MDcwNTcxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
